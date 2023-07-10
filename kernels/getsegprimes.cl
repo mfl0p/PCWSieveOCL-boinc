@@ -112,13 +112,15 @@ inline bool strong_prp_two(ulong N, ulong exp, ulong curBit, ulong q, ulong nmo,
 }
 
 
-inline bool strong_prp(ulong N, ulong exp, ulong curBit, ulong q, ulong r2, ulong nmo, ulong one, int t, ulong base)
+inline bool strong_prp(ulong N, ulong exp, ulong curBit, ulong q, ulong nmo, ulong one, int t, ulong base)
 {
 	/* If N is prime and N = d*2^t+1, where d is odd, then either
 		1.  a^d = 1 (mod N), or
 		2.  a^(d*2^s) = -1 (mod N) for some s in 0 <= s < t    */
 
-	ulong mbase = montMul(base,r2,N,q);  // convert base to montgomery form;
+        // 2^1 in Montgomery form is 2^63 mod P.  P is usually smaller than 2^63, so that gets mangled.
+        // 2^64 in Montgomery form is just 1 mod P.  P is always larger than 1, so that doesn't get mangled.
+	ulong mbase = montMul(base,1,N,q);  // convert base to montgomery form;
 	ulong a = mbase; 
 
   	/* r <-- a^d mod N, assuming d odd */
@@ -260,7 +262,7 @@ __kernel __attribute__ ((reqd_work_group_size(256, 1, 1))) void getsegprimes(ulo
 	// barriers prevent thread divergence. makes this test about 3 times faster
 	for(int z = 0; z < cnt; z += 256){
 
-		ulong N, nmo, exp, curBit, q, one, two, r2;
+		ulong N, nmo, exp, curBit, q, one, two;
 		int t;
 		bool good_prp = false;
 
@@ -282,25 +284,21 @@ __kernel __attribute__ ((reqd_work_group_size(256, 1, 1))) void getsegprimes(ulo
 
 		barrier(CLK_LOCAL_MEM_FENCE);
 		if(good_prp){
-			r2 = add(two, two, N);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);	// 4^{2^5} = 2^64
-			good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 325);
+                        // There was code here to calculate the Montgomery form of 2^64 (mod P)
+                        // See strong_prp for why that's unnecessary.
+			good_prp = strong_prp(N, exp, curBit, q, nmo, one, t, 325);
 		}
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 9375);
+		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, nmo, one, t, 9375);
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 28178);
+		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, nmo, one, t, 28178);
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 450775);
+		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, nmo, one, t, 450775);
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 9780504);
+		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, nmo, one, t, 9780504);
 		barrier(CLK_LOCAL_MEM_FENCE);
 		if(good_prp){
-			if(strong_prp(N, exp, curBit, q, r2, nmo, one, t, 1795265022)){
+			if(strong_prp(N, exp, curBit, q, nmo, one, t, 1795265022)){
 				g_prime[ atomic_inc(&primecount[0]) ] = N;
 			}
 		}
