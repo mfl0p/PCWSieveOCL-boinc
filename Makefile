@@ -4,7 +4,7 @@ LD = $(CC)
 .SUFFIXES:
 .SUFFIXES: .o .c .h .cl .cpp
 
-VER = 23_4_30
+VER = 24_5_6
 
 APP = PCWSieve-win64-$(VER)
 
@@ -12,7 +12,7 @@ SRC = main.cpp cl_sieve.cpp cl_sieve.h simpleCL.c simpleCL.h kernels/clearn.cl k
 KERNEL_HEADERS = kernels/clearn.h kernels/clearresult.h kernels/sieve.h kernels/sievecw.h kernels/setup.h kernels/check.h kernels/getsegprimes.h
 OBJ = main.o cl_sieve.o simpleCL.o factor_proth.o verify_factor.o putil.o
 
-LIBS = OpenCL.dll libprimesieve.a
+LIBS = OpenCL.dll libprimesievewin.a
 
 BOINC_DIR = C:/mingwbuilds/boinc
 BOINC_INC = -I$(BOINC_DIR)/lib -I$(BOINC_DIR)/api -I$(BOINC_DIR) -I$(BOINC_DIR)/win_build

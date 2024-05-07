@@ -269,9 +269,12 @@ void waitOnEvent(sclHard hardware, cl_event event){
 
 	cl_int err;
 	cl_int info;
+#ifdef _WIN32
+#else
 	struct timespec sleep_time;
 	sleep_time.tv_sec = 0;
 	sleep_time.tv_nsec = 1000000;	// 1ms
+#endif
 
 	boinc_begin_critical_section();
 
@@ -284,7 +287,11 @@ void waitOnEvent(sclHard hardware, cl_event event){
 
 	while(true){
 
+#ifdef _WIN32
+		Sleep(1);
+#else
 		nanosleep(&sleep_time,NULL);
+#endif
 
 		err = clGetEventInfo(event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &info, NULL);
 		if ( err != CL_SUCCESS ) {
@@ -315,9 +322,12 @@ void sleepCPU(sclHard hardware){
 	cl_event kernelsDone;
 	cl_int err;
 	cl_int info;
+#ifdef _WIN32
+#else
 	struct timespec sleep_time;
 	sleep_time.tv_sec = 0;
 	sleep_time.tv_nsec = 1000000;	// 1ms
+#endif
 
 	boinc_begin_critical_section();
 
@@ -346,7 +356,11 @@ void sleepCPU(sclHard hardware){
 
 	while(true){
 
+#ifdef _WIN32
+		Sleep(1);
+#else
 		nanosleep(&sleep_time,NULL);
+#endif
 
 		err = clGetEventInfo(kernelsDone, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &info, NULL);
 		if ( err != CL_SUCCESS ) {
@@ -369,7 +383,6 @@ void sleepCPU(sclHard hardware){
 		}
 	}
 }
-
 
 
 // find mod 30 wheel index based on starting N

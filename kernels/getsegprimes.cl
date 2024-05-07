@@ -1,5 +1,4 @@
 
-// 7 base test required for checksum to match CPU version of the program.
 
 
 // count trailing zeros long
@@ -87,47 +86,6 @@ inline bool strong_prp_two(ulong N, ulong exp, ulong curBit, ulong q, ulong nmo,
 
 		if(exp & curBit){
 			a = add(a,a,N);
-		}
-
-		curBit >>= 1;
-	}
-
-	/* Clause 1. and s = 0 case for clause 2. */
-	if (a == one || a == nmo){
-		return true;
-	}
-
-	/* 0 < s < t cases for clause 2. */
-	for (int s = 1; s < t; ++s){
-
-		a = montMul(a,a,N,q);
-
-		if(a == nmo){
-	    		return true;
-		}
-	}
-
-
-	return false;
-}
-
-
-inline bool strong_prp(ulong N, ulong exp, ulong curBit, ulong q, ulong r2, ulong nmo, ulong one, int t, ulong base)
-{
-	/* If N is prime and N = d*2^t+1, where d is odd, then either
-		1.  a^d = 1 (mod N), or
-		2.  a^(d*2^s) = -1 (mod N) for some s in 0 <= s < t    */
-
-	ulong mbase = montMul(base,r2,N,q);  // convert base to montgomery form;
-	ulong a = mbase; 
-
-  	/* r <-- a^d mod N, assuming d odd */
-	while( curBit )
-	{
-		a = montMul(a,a,N,q);
-
-		if(exp & curBit){
-			a = montMul(a,mbase,N,q);
 		}
 
 		curBit >>= 1;
@@ -255,14 +213,10 @@ __kernel __attribute__ ((reqd_work_group_size(256, 1, 1))) void getsegprimes(ulo
 
 	int cnt = count;
 
-	// prime if the number passes this test to all bases.  good to 2^64
-	// 2, 325, 9375, 28178, 450775, 9780504, 1795265022
-	// barriers prevent thread divergence. makes this test about 3 times faster
 	for(int z = 0; z < cnt; z += 256){
 
 		ulong N, nmo, exp, curBit, q, one, two, r2;
 		int t;
-		bool good_prp = false;
 
 		int pos = y + z;
 
@@ -277,35 +231,11 @@ __kernel __attribute__ ((reqd_work_group_size(256, 1, 1))) void getsegprimes(ulo
 			one = (-N) % N;
 			nmo = N - one;
 			two = add(one, one, N);
-			good_prp = strong_prp_two(N, exp, curBit, q, nmo, one, t, two);
-		}
-
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp){
-			r2 = add(two, two, N);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);
-			r2 = montMul(r2, r2, N, q);	// 4^{2^5} = 2^64
-			good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 325);
-		}
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 9375);
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 28178);
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 450775);
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp) good_prp = strong_prp(N, exp, curBit, q, r2, nmo, one, t, 9780504);
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(good_prp){
-			if(strong_prp(N, exp, curBit, q, r2, nmo, one, t, 1795265022)){
+			if( strong_prp_two(N, exp, curBit, q, nmo, one, t, two) ){
 				g_prime[ atomic_inc(&primecount[0]) ] = N;
 			}
 		}
 	}
-
 }
 
 

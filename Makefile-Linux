@@ -4,7 +4,7 @@ LD = $(CC)
 .SUFFIXES:
 .SUFFIXES: .o .c .h .cl .cpp
 
-VER = 23_4_30
+VER = 24_5_6
 
 APP = PCWSieve-linux64-$(VER)
 

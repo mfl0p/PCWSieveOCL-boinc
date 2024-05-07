@@ -1,7 +1,7 @@
 ///
 /// @file  macros.hpp
 ///
-/// Copyright (C) 2022 Kim Walisch, <kim.walisch@gmail.com>
+/// Copyright (C) 2024 Kim Walisch, <kim.walisch@gmail.com>
 ///
 /// This file is distributed under the BSD License. See the COPYING
 /// file in the top level directory.
@@ -31,7 +31,7 @@
 
 /// Enable expensive debugging assertions.
 /// These assertions enable e.g. bounds checks for the
-/// pod_vector and pod_array types.
+/// Vector and Array types.
 ///
 #if defined(ENABLE_ASSERT)
   #undef NDEBUG
@@ -61,6 +61,16 @@
   #define NOINLINE __declspec(noinline)
 #else
   #define NOINLINE
+#endif
+
+#if __cplusplus >= 202002L && \
+    __has_cpp_attribute(likely)
+  #define if_likely(x) if (x) [[likely]]
+#elif defined(__GNUC__) || \
+      __has_builtin(__builtin_expect)
+  #define if_likely(x) if (__builtin_expect(!!(x), 1))
+#else
+  #define if_likely(x) if (x)
 #endif
 
 #if __cplusplus >= 202002L && \
